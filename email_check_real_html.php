@@ -154,12 +154,12 @@ try {
 
     
     <tr>
-      <td style='background-color:#0a0a0a;padding:28px 40px;border-bottom:3px solid #2ECC71;'>
+      <td style='background-color:#0a0a0a;padding:28px 40px;border-bottom:3px solid #2ECC71;color:#FFFFFF;'>
         <table role='presentation' border='0' cellpadding='0' cellspacing='0' width='100%'>
           <tr>
             <td>
               <span style='font-family:'Outfit';font-size:26px;font-weight:700;
-                           letter-spacing:4px;color:#ffffff;text-decoration:none;'>
+                           letter-spacing:4px;color:#FFFFFF;text-decoration:none;'>
                 Sports<span style='color:#2ECC71;'>Zone</span>
               </span>
             </td>
@@ -169,16 +169,16 @@ try {
     </tr>
     
     <tr>
-      <td style='background-color:#0d2b1a;padding:0;overflow:hidden;'>
+      <td style='background-color:#0d2b1a;padding:0;overflow:hidden;color:#FFFFFF;'>
         <table role='presentation' border='0' cellpadding='0' cellspacing='0' width='100%'>
           <tr>
             <td style='background:linear-gradient(135deg,#0d2b1a 0%,#1a3d2b 50%,#0d2b1a 100%);
                        padding:50px 40px;text-align:center;border-bottom:1px solid rgba(46,204,113,0.2);'>
-              <div style='font-size:52px;margin-bottom:16px;'>🥎</div>
+              <div style='font-size:52px;margin-bottom:16px;color:#FFFFFF;'>🥎</div>
 
               <h1 style='font-family:'Outfit';font-size:34px;font-weight:700;
                          letter-spacing:3px;color:#ffffff;margin:0 0 10px 0;line-height:1.1;'>
-                Your Verification Code: <br><span style='color:#2ECC71;font-size:18px;'>$code</span>
+                Your Verification Code: <br><span style='color:#2ECC71;font-size:18px;letter-spacing:10px;'>$code</span>
               </h1>
 
               <p style='font-family:'Outfit';font-size:12px;letter-spacing:2px;

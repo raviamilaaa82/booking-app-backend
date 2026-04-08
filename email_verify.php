@@ -5,6 +5,7 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Access-Control-Allow-Credentials:true");
 
 require_once 'db_connection.php';
+require_once "response.php";
 
 $postdata = file_get_contents("php://input");
 
@@ -17,15 +18,9 @@ if (isset($postdata) && !empty($postdata)) {
     $msg_arr = [];
     // $user_data = [];
     if (checkingCode($connection, $email, $code) == 1) {
-        $msg = "Your email is verified.";
-        $msg_arr[0]['identify'] = 'success';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
+        jsonResponse(true, null, "Your email is verified.", "Email Verified", 200);
     } else {
-        $msg = "Your email is not verified.";
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
+        jsonResponse(false, null, "Your OTP verification failed, Please Check your OTP", "Email Verification Failed", 200);
     }
 }
 

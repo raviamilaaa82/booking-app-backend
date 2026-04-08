@@ -3,8 +3,7 @@ header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Access-Control-Allow-Methods: POST,GET");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Access-Control-Allow-Credentials:true");
-//https://www.millioncliq.com
-//http://localhost:3000
+
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -12,6 +11,7 @@ use PHPMailer\PHPMailer\Exception;
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
+require_once "response.php";
 
 
 
@@ -27,11 +27,17 @@ if (isset($postdata) && !empty($postdata)) {
     // $userpassword = $request->userpassword;
     $msg_arr = [];
     $user_data = [];
+
+    if(!filter_var($email, FILTER_VALIDATE_EMAIL)){
+      jsonResponse(false, null, "Please Enter a Valid Email format", "Validation Error", 200);
+       exit;
+    }
     if (checkingEmail($connection, $email) > 0) {
-        $msg = "Email is already used";
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
+        // $msg = "Email is already used";
+        // $msg_arr[0]['identify'] = 'error';
+        // $msg_arr[1]['msg'] = $msg;
+        // echo json_encode($msg_arr);
+        jsonResponse(false, null, "Email is already being registered.", "Validation Error", 200);
     } else {
         createRandomNumAndSaveDb($connection, $email);
     }
@@ -45,16 +51,19 @@ function checkingEmail($connection, $email)
         $msg_arr[0]['identify'] = 'error';
         $msg_arr[1]['msg'] = $msg;
         echo json_encode($msg_arr);
+        // jsonResponse(false, null, "Prepare failed for checking user : (" . $connection->errno . ") " . $connection->error, "Validation error", 500);
     } else if (!($stmt->bind_param("s", $email))) {
         $msg = "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error;
         $msg_arr[0]['identify'] = 'error';
         $msg_arr[1]['msg'] = $msg;;
         echo json_encode($msg_arr);
+        // jsonResponse(false, null, "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error, "Validation error", 500);
     } else if (!($stmt->execute())) {
         $msg = "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
         $msg_arr[0]['identify'] = 'error';
         $msg_arr[1]['msg'] = $msg;
         echo json_encode($msg_arr);
+        // jsonResponse(false, null, "Execute failed: (" . $stmt->errno . ") " . $stmt->error, "Validation error", 500);
     } else {
         $email_result = $stmt->get_result();
         $email_count = $email_result->fetch_assoc();
@@ -78,16 +87,19 @@ function createRandomNumAndSaveDb($connection, $email)
         $msg_arr[0]['identify'] = 'error';
         $msg_arr[1]['msg'] = $msg;
         echo json_encode($msg_arr);
+        // jsonResponse(false, null, $connection->error,"Validation error", 500);
     } else if (!($stmt1->bind_param("si", $email, $rnum))) {
         $msg = "Binding parameters failed: (" . $stmt1->errno . ") " . $stmt1->error;
         $msg_arr[0]['identify'] = 'error';
         $msg_arr[1]['msg'] = $msg;
         echo json_encode($msg_arr);
+        // jsonResponse(false, null, $stmt1->error,,"Validation error", 500);
     } else if (!($stmt1->execute())) {
         $msg = "Execute failed: (" . $stmt1->errno . ") " . $stmt1->error;
         $msg_arr[0]['identify'] = 'error';
         $msg_arr[1]['msg'] = $msg;
         echo json_encode($msg_arr);
+        // jsonResponse(false, null, $stmt1->error,"Validation error", 500);
     } else {
         sendMail($rnum, $email);
        
@@ -133,13 +145,11 @@ try {
     // $imageUrl = "http://localhost:3000/images/mqq.png";
     $mail->isHTML(true);                                  //Set email format to HTML
     $mail->Subject = 'Email Verification';
-    $mail->Body    = "<html>
+    $mail->Body    = "
+<html>
 <head>
     <title></title>
 </head>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap');
-</style>
 
 <body style='margin:0;padding:0;background-color:#0f0f0f;font-family:'Outfit',Helvetica,Arial,sans-serif;'>
 <div style='display:none;max-height:0;overflow:hidden;font-size:1px;color:#0f0f0f;'>
@@ -158,7 +168,7 @@ try {
         <table role='presentation' border='0' cellpadding='0' cellspacing='0' width='100%'>
           <tr>
             <td>
-              <span style='font-family:'Outfit';font-size:26px;font-weight:700;
+              <span style='font-size:26px;font-weight:700;
                            letter-spacing:4px;color:#FFFFFF;text-decoration:none;'>
                 Sports<span style='color:#2ECC71;'>Zone</span>
               </span>
@@ -176,12 +186,12 @@ try {
                        padding:50px 40px;text-align:center;border-bottom:1px solid rgba(46,204,113,0.2);'>
               <div style='font-size:52px;margin-bottom:16px;color:#FFFFFF;'>🥎</div>
 
-              <h1 style='font-family:'Outfit';font-size:34px;font-weight:700;
+              <h1 style='font-size:34px;font-weight:700;
                          letter-spacing:3px;color:#ffffff;margin:0 0 10px 0;line-height:1.1;'>
                 Your Verification Code: <br><span style='color:#2ECC71;font-size:18px;letter-spacing:10px;'>$code</span>
               </h1>
 
-              <p style='font-family:'Outfit';font-size:12px;letter-spacing:2px;
+              <p style='font-size:12px;letter-spacing:2px;
                         text-transform:uppercase;color:#ffffff;margin:0;'>
                 This code can only be used once. It expires in 15 minutes.
               </p>
@@ -214,21 +224,11 @@ try {
 </html>
 
 ";
-    // $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
 
     $mail->send();
-   
-     $msg = "The email has been sent. Please check your inbox.";
-    $msg_arr[0]['identify'] = 'success';
-    $msg_arr[1]['msg'] = $msg;
-    echo json_encode($msg_arr);
+    jsonResponse(true, null, null,"The email has been sent. Please check your inbox.", 200);
 } catch (Exception $e) {
-    // echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
-    $msg = "Something wrong with email address try again";
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-
-        echo json_encode($msg_arr);
+    jsonResponse(false, null, $mail->ErrorInfo,"Something wrong with email address try again", 400);
 }
 
 

@@ -11,6 +11,7 @@ use PHPMailer\PHPMailer\Exception;
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
+require_once "response.php";
 
 
 require_once 'db_connection.php';
@@ -44,6 +45,7 @@ if (isset($postdata) && !empty($postdata)) {
     $stmt = null;
     // $statement = null;
     $msg_arr = [];
+    
 
     // if (checkingPhone($connection, $userphone) > 0) {
 
@@ -356,17 +358,19 @@ try {
 
     $mail->send();
    
-     $msg = "The email has been sent. Please check your inbox.";
-    $msg_arr[0]['identify'] = 'success';
-    $msg_arr[1]['msg'] = $msg;
-    echo json_encode($msg_arr);
+    //  $msg = "The email has been sent. Please check your inbox.";
+    // $msg_arr[0]['identify'] = 'success';
+    // $msg_arr[1]['msg'] = $msg;
+    // echo json_encode($msg_arr);
+    jsonResponse(true, null, "The email has been sent. Please check your inbox.", "", 200);
 } catch (Exception $e) {
     // echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
-         $msg = $e;
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
+        //  $msg = $e;
+        // $msg_arr[0]['identify'] = 'error';
+        // $msg_arr[1]['msg'] = $msg;
 
-        echo json_encode($msg_arr);
+        // echo json_encode($msg_arr);
+        jsonResponse(false, null, $e, "Error", 200);
 }
 
     

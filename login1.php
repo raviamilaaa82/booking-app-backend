@@ -46,7 +46,7 @@ exit;
 function loginUser($connection, $email, $password)
 {
     // Prepare statement to fetch user by email
-    $stmt = $connection->prepare("SELECT id, first_name, last_name, email, phone, user_type, reg_date, password FROM tbl_registration WHERE email = ?");
+    $stmt = $connection->prepare("SELECT id, first_name, last_name, email, phone, user_type, reg_date,password FROM tbl_registration WHERE email = ?");
     if (!$stmt) {
         return ['error' => 'Database error: ' . $connection->error];
     }

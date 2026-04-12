@@ -39,6 +39,7 @@ if (isset($postdata) && !empty($postdata)) {
         // echo json_encode($msg_arr);
         jsonResponse(false, null, "Email is already being registered.", "Validation Error", 200);
     } else {
+      checkingOtpCodes($connection, $email);
         createRandomNumAndSaveDb($connection, $email);
     }
 }
@@ -77,7 +78,35 @@ function checkingEmail($connection, $email)
 
     return $user_email_count;
 }
+function checkingOtpCodes($connection, $email)
+{
 
+    if (!($stmt = $connection->prepare("DELETE FROM tbl_temp_email WHERE email=? "))) {
+        $msg = "Prepare failed for checking user : (" . $connection->errno . ") " . $connection->error;
+        $msg_arr[0]['identify'] = 'error';
+        $msg_arr[1]['msg'] = $msg;
+        echo json_encode($msg_arr);
+        // jsonResponse(false, null, "Prepare failed for checking user : (" . $connection->errno . ") " . $connection->error, "Validation error", 500);
+    } else if (!($stmt->bind_param("s", $email))) {
+        $msg = "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error;
+        $msg_arr[0]['identify'] = 'error';
+        $msg_arr[1]['msg'] = $msg;;
+        echo json_encode($msg_arr);
+        // jsonResponse(false, null, "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error, "Validation error", 500);
+    } else if (!($stmt->execute())) {
+        $msg = "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+        $msg_arr[0]['identify'] = 'error';
+        $msg_arr[1]['msg'] = $msg;
+        echo json_encode($msg_arr);
+        // jsonResponse(false, null, "Execute failed: (" . $stmt->errno . ") " . $stmt->error, "Validation error", 500);
+    } 
+    if ($stmt !== null) {
+        $stmt->close();
+    }
+
+
+    
+}
 
 function createRandomNumAndSaveDb($connection, $email)
 {
@@ -110,6 +139,8 @@ function createRandomNumAndSaveDb($connection, $email)
 
     $connection->close();
 }
+
+
 
 
 

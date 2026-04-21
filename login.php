@@ -1,199 +1,84 @@
 <?php
-session_start();
-header("Access-Control-Allow-Origin: http://localhost:5173");
-header("Access-Control-Allow-Methods: OPTIONS,POST,GET");
-header("Access-Control-Allow-Headers:Origin, X-Api-Key, X-Requested-With, Content-Type, Accept, Authorization");
-header("Access-Control-Allow-Credentials:true");
+require_once "header.php";
+
+// HANDLE PRE-FLIGHT REQUEST
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 
 require_once 'db_connection.php';
+require_once "response.php";
 
+
+// Get and decode input
 $postdata = file_get_contents("php://input");
-
-if (isset($postdata) && !empty($postdata)) {
-    $request = json_decode($postdata);
-
-    $email = $request->email;
-    $userpassword = $request->password;
-    $msg_arr = [];
-    $user_data = [];
-
-    gettingUserPw($connection, $email, $userpassword);
+if (empty($postdata)) {
+    // echo json_encode(['error' => 'Missing request body']);
+    jsonResponse(false, null, "Missing request body", "Login Error", 200);
+    exit;
 }
 
-function gettingUserPw($connection, $email, $userpassword)
+$request = json_decode($postdata);
+if (!isset($request->email, $request->password)) {
+    // echo json_encode(['error' => 'Email and password required']);
+    jsonResponse(false, null, "Email and password required", "Login Error", 200);
+    exit;
+}
+
+$email = trim($request->email);
+$password = $request->password;
+
+// Basic validation
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    // echo json_encode(['error' => 'Invalid email format']);
+    jsonResponse(false, null, "Invalid email format", "Login Error", 200);
+    exit;
+}
+if (strlen($password) < 8) {
+    // echo json_encode(['error' => 'Password too short']);
+    jsonResponse(false, null, "Password too short", "Login Error", 200);
+    exit;
+}
+
+// Perform login
+$result = loginUser($connection, $email, $password);
+
+function loginUser($connection, $email, $password)
 {
-    if (!($stmt = $connection->prepare("SELECT password FROM tbl_registration WHERE $email=?"))) {
-        $msg = "Prepare failed for checking user : (" . $connection->errno . ") " . $connection->error;
-
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
-    } else if (!($stmt->bind_param("s", $email))) {
-        $msg = "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error;
-
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
-    } else if (!($stmt->execute())) {
-        $msg = "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
-
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
-    } else {
-
-        // $usertype = [];
-        $hashpw = '';
-        $result = $stmt->get_result();
-        $data = $result->fetch_assoc();
-
-        if ($result !== null && $result->num_rows > 0) {
-            $hashpw = $data['password'];
-
-
-            if (password_verify($userpassword, $hashpw)) {
-
-                checkingClientLogin($connection, $email, $hashpw);
-            } else {
-                $msg = "User name or password error!";
-
-                $msg_arr[0]['identify'] = 'error';
-                $msg_arr[1]['msg'] = $msg;
-                echo json_encode($msg_arr);
-            }
-        } else {
-            $msg = "You are not registered user. Please register!";
-
-            $msg_arr[0]['identify'] = 'error';
-            $msg_arr[1]['msg'] = $msg;
-            echo json_encode($msg_arr);
-        }
-
-        $stmt->close();
+    // Prepare statement to fetch user by email
+    $stmt = $connection->prepare("SELECT id, first_name, last_name, email, phone, user_type, reg_date,password FROM tbl_registration WHERE email = ?");
+    if (!$stmt) {
+        return ['error' => 'Database error: ' . $connection->error];
     }
-}
 
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-
-function checkingClientLogin($connection, $email, $hashpw)
-{
-    if (!($stmt = $connection->prepare("SELECT COUNT(id) as check_user_count FROM tbl_registration WHERE email=? AND password=?"))) {
-        $msg = "Prepare failed for checking user : (" . $connection->errno . ") " . $connection->error;
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-
-        echo json_encode($msg_arr);
-    } else if (!($stmt->bind_param("ss", $email, $hashpw))) {
-        $msg = "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error;
-
-
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
-    } else if (!($stmt->execute())) {
-        $msg = "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
-
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
-    } else {
-
-        $result = $stmt->get_result();
-        $count = $result->fetch_assoc();
-
-        $user_count = $count['check_user_count'];
-        $user_data = [];
-        $user_dates = [];
-        $user_types = [];
-        $user_validity = [];
-        $clientuid = "";
-
-        if ($user_count == 1) {
-
+    if ($result->num_rows === 0) {
+        $stmt->close();
+        // return ['error' => 'No account found with this email'];
+        jsonResponse(false, null, "No account found with this email", "Login Error", 200);
         
-                // $clientuid = creatingUniqId();
-                // $_SESSION['uniquid'] = $clientuid;
-                $user_data = gettingClientDetails($email, $hashpw, $connection);
-
-                $msg_arr[0]['identify'] = 'success';
-                $msg_arr[2]['id'] = $user_data[0];
-                $msg_arr[3]['name'] = $user_data[1];
-                $msg_arr[4]['usertype'] = $user_data[2];
-                $msg_arr[5]['uniqid'] =  $clientuid;
-           
-        } else {
-            $msg = "User name or password error!";
-
-            $msg_arr[0]['identify'] = 'error';
-            $msg_arr[1]['msg'] = $msg;
-        }
-
-        $stmt->close();
-
-        echo json_encode($msg_arr);
     }
-}
 
+    $user = $result->fetch_assoc();
+    $stmt->close();
 
-
-
-
-
-
-
-function gettingClientDetails($email, $hashpw, $connection)
-{
-    if (!($stmt = $connection->prepare("SELECT `id`, `first_name`, `last_name`, `email`, `phone`,`user_type`, `reg_date` FROM tbl_registration WHERE email=? AND password=?"))) {
-        $msg = "Prepare failed for checking user : (" . $connection->errno . ") " . $connection->error;
-
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
-    } else if (!($stmt->bind_param("ss", $email, $hashpw))) {
-        $msg = "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error;
-
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
-    } else if (!($stmt->execute())) {
-        $msg = "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
-
-        $msg_arr[0]['identify'] = 'error';
-        $msg_arr[1]['msg'] = $msg;
-        echo json_encode($msg_arr);
-    } else {
-
-        $user_data = [];
-        $result = $stmt->get_result();
-        $data = $result->fetch_assoc();
-        $user_data[0] = $data['id'];
-        $user_data[1] = $data['first_name'];
-        $user_data[2] = $data['last_name'];
-         $user_data[2] = $data['email'];
-          $user_data[2] = $data['phone'];
-          $user_data[2] = $data['user_type'];
-           $user_data[2] = $data['reg_date'];
-
-
-        $stmt->close();
-
-        return $user_data;
+    // Verify password
+    if (!password_verify($password, $user['password'])) {
+        // return ['error' => 'Invalid email or password'];
+        jsonResponse(false, null, "Invalid email or password", "Login Error", 200);
     }
+
+  
+    $_SESSION = [];
+    
+    $_SESSION['user_id'] = $user['id'];
+    $sessionId = session_id();
+    $user['sessiontoken'] = $sessionId;
+    jsonResponse(true, $user, "Sucessful login", "Login Successful", 200);
 }
-
-// function creatingUniqId($data = null)
-// {
-//     $data = $data ?? random_bytes(16);
-//     assert(strlen($data) == 16);
-
-
-//     $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
-
-//     $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
-
-
-//     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-// }
-// if ($connection !== null) {
-//     $connection->close();
-// }
+?>

@@ -1,18 +1,11 @@
 <?php
-header("Access-Control-Allow-Origin: http://localhost:5173");
-header("Access-Control-Allow-Methods: POST,GET");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Access-Control-Allow-Credentials:true");
-
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
+require_once "header.php";
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
 require_once "response.php";
-
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 require_once 'db_connection.php';
 
@@ -21,12 +14,9 @@ $postdata = file_get_contents("php://input");
 if (isset($postdata) && !empty($postdata)) {
     $request = json_decode($postdata);
 
- 
-    
     $title = $request->title;
-     $sport_id = $request->sport_id;
-     $client_id=$request->client_id;
-    $date = $request->date;
+    $sport_id = $request->sport_id;
+    $client_id=$request->client_id;
     $is_booked= false;
     $booking_date = $request->booking_date;
     $is_recurr_event = $request->is_recurr_event;
@@ -34,6 +24,7 @@ if (isset($postdata) && !empty($postdata)) {
     $status=$request->status;
     $time_slots = $request->timeSlots; 
     $colors=$request->color; 
+    $booking_price = $request->booking_price;
 
   
      $current_date = date_create()->format('Y-m-d H:i:s');
@@ -44,19 +35,18 @@ if (isset($postdata) && !empty($postdata)) {
     $msg_arr = [];
     
 
-
-         insertBookingData($connection,$title,$sport_id, $client_id,$current_date, $booking_date, $is_recurr_event,$is_all_day,$status,$colors,$time_slots,$is_booked);
+    insertBookingData($connection,$title,$sport_id, $client_id,$current_date, $booking_date, $is_recurr_event,$is_all_day,$status,$colors,$time_slots,$is_booked, $booking_price);
     
 }
-function insertBookingData($connection, $title,$sport_id, $client_id,$current_date, $booking_date, $is_recurr_event,$is_all_day,$status,$colors,$time_slots,$is_booked)
+function insertBookingData($connection, $title,$sport_id, $client_id,$current_date, $booking_date, $is_recurr_event,$is_all_day,$status,$colors,$time_slots,$is_booked, $booking_price)
 {
 
-    if (!($stmt = $connection->prepare("INSERT INTO tbl_booking_master (event_title, sport_id, client_id, date, booking_date, is_recurr_event, is_all_day,status,colors) VALUES (?,?,?,?,?,?,?,?,?)"))) {
+    if (!($stmt = $connection->prepare("INSERT INTO tbl_booking_master (event_title, sport_id, client_id, date, booking_date, is_recurr_event, is_all_day,status,colors, booking_price) VALUES (?,?,?,?,?,?,?,?,?,?)"))) {
         $msg = "Prepare failed: (" . $connection->errno . ") " . $connection->error;
         $msg_arr[0]['identify'] = 'error';
         $msg_arr[1]['msg'] = $msg;
         echo json_encode($msg_arr);
-    } else if (!($stmt->bind_param("siissiiis", $title,$sport_id, $client_id,$current_date, $booking_date, $is_recurr_event,$is_all_day,$status,$colors))) {
+    } else if (!($stmt->bind_param("siissiiisi", $title,$sport_id, $client_id,$current_date, $booking_date, $is_recurr_event,$is_all_day,$status,$colors, $booking_price))) {
         $msg = "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error;
         $msg_arr[0]['identify'] = 'error';
         $msg_arr[1]['msg'] = $msg;
@@ -67,9 +57,13 @@ function insertBookingData($connection, $title,$sport_id, $client_id,$current_da
         $msg_arr[1]['msg'] = $msg;
         echo json_encode($msg_arr);
     } else {
-             $lastId = $stmt->insert_id;
-   
-             insertBookingDetails($connection, $lastId,$time_slots,$is_booked);
+        $lastId = $stmt->insert_id;
+        if(insertBookingDetails($connection, $lastId,$time_slots,$is_booked)){
+            jsonResponse(true, null, "Booking Successfull", "Booking Successfull", 200);
+        }
+        else{
+            jsonResponse(false, null, "Booking creation Failed", "Booking Error", 200);
+        }
        
     }
 }

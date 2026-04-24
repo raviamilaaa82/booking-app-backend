@@ -1,8 +1,9 @@
 <?php
+
 function jsonResponse($success, $data = null, $error = null, $message = "", $statusCode = 200) {
     http_response_code($statusCode);
 
-    header("Content-Type: application/json");
+    require_once "header.php";
 
     echo json_encode([
         "success" => $success,

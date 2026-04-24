@@ -26,9 +26,7 @@ if (isset($postdata) && !empty($postdata)) {
     $colors=$request->color; 
     $booking_price = $request->booking_price;
 
-  
-     $current_date = date_create()->format('Y-m-d H:i:s');
-    //  $current_date = date("Y-m-d");
+    $current_date = date("Y-m-d");
  
     $stmt = null;
     $statement = null;

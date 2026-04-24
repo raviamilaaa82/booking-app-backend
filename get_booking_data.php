@@ -61,7 +61,7 @@ if (!($stmt)) {
     if ($result !== null && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $msg_arr[$cr]['BookingId'] = $row['booking_id'];
-            $msg_arr[$cr]['sportname'] = $row['event_title'];
+            $msg_arr[$cr]['eventTitle'] = $row['event_title'];
             $msg_arr[$cr]['sport_id'] = $row['sport_id'];
             $msg_arr[$cr]['client_id'] = $row['client_id'];
             $msg_arr[$cr]['booking_date'] = $row['booking_date'];

@@ -22,17 +22,31 @@ $stmt = $connection->prepare("
     sm.time_slot_name,
     sm.time_period,
     CASE 
+        WHEN ad.all_day_count > 0 THEN 1
         WHEN COUNT(b.id) > 0 THEN 1 
         ELSE 0 
     END AS isbooked
 FROM tbl_time_slots sm
+
+-- normal slot booking join
 LEFT JOIN tbl_booking_details bs 
     ON sm.id = bs.time_slot
     AND bs.status = 1
+
 LEFT JOIN tbl_booking_master b 
     ON b.id = bs.booking_mast_id 
     AND b.booking_date = ?
-GROUP BY sm.id, sm.time_slot_name, sm.time_period
+
+-- all day booking check (subquery)
+LEFT JOIN (
+    SELECT COUNT(*) AS all_day_count
+    FROM tbl_booking_master
+    WHERE booking_date = ?
+    AND is_all_day = 1
+    AND status = 1
+) ad ON 1=1
+
+GROUP BY sm.id, sm.time_slot_name, sm.time_period, ad.all_day_count
 ORDER BY sm.id;
 ");
 
@@ -44,7 +58,7 @@ if (!($stmt)) {
     $msg_arr[0]['identify'] = 'error';
     $msg_arr[1]['msg'] = $msg;
     echo json_encode($msg_arr);
-} else if (!($stmt->bind_param("s",$date))) {
+} else if (!($stmt->bind_param("ss",$date, $date))) {
     $msg = "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error;
     $msg_arr[0]['identify'] = 'error';
     $msg_arr[1]['msg'] = $msg;

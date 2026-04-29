@@ -17,29 +17,35 @@ $msg_arr = [];
 
 $stmt = $connection->prepare("
     SELECT 
-        b.id AS booking_id,
-        b.event_title,
-        b.sport_id,
-        b.client_id,
-        b.booking_date,
-        b.is_recurr_event,
-        b.is_all_day,
-        b.status,
-        b.colors,
-        CONCAT(reg.first_name, ' ', reg.last_name) AS full_name,
-        reg.phone,
-        GROUP_CONCAT(bt.time_slot) AS timeslots,
-        sp.sport_name,
-        b.booking_price
-    FROM tbl_booking_master b
-    LEFT JOIN tbl_booking_details bt 
-        ON bt.booking_mast_id = b.id
-    INNER JOIN tbl_registration reg
-        ON reg.id= b.client_id
-    INNER JOIN tbl_sports sp
-        ON sp.id = b.sport_id
-    WHERE bt.status = 1 AND b.status IN (1,2)          
-    GROUP BY b.id, b.client_id
+    b.id AS booking_id,
+    b.event_title,
+    b.sport_id,
+    b.client_id,
+    b.booking_date,
+    b.is_recurr_event,
+    b.is_all_day,
+    b.status,
+    b.colors,
+    CONCAT(reg.first_name, ' ', reg.last_name) AS full_name,
+    reg.phone,
+    GROUP_CONCAT(bt.time_slot) AS timeslots,
+    sp.sport_name,
+    b.booking_price
+FROM tbl_booking_master b
+
+LEFT JOIN tbl_booking_details bt 
+    ON bt.booking_mast_id = b.id
+    AND bt.status = 1
+
+INNER JOIN tbl_registration reg
+    ON reg.id = b.client_id
+
+INNER JOIN tbl_sports sp
+    ON sp.id = b.sport_id
+
+WHERE b.status IN (1,2)
+
+GROUP BY b.id;
 ");
 
 if (!($stmt)) {

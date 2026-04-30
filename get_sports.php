@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $msg_arr = [];
 
 
-if (!($stmt = $connection->prepare("SELECT `id`,`sport_name`,`rate`,`icon` FROM `tbl_sports` WHERE `status`=1"))) {
+if (!($stmt = $connection->prepare("SELECT `id`,`sport_name`,`rate`,`icon`,`all_day_rate` FROM `tbl_sports` WHERE `status`=1"))) {
     $msg = "Prepare failed for getting announcemnt user : (" . $connection->errno . ") " . $connection->error;
     $msg_arr[0]['identify'] = 'error';
     $msg_arr[1]['msg'] = $msg;
@@ -57,6 +57,7 @@ if (!($stmt = $connection->prepare("SELECT `id`,`sport_name`,`rate`,`icon` FROM 
             $msg_arr[$cr]['sportname'] = $row['sport_name'];
             $msg_arr[$cr]['rate'] = $row['rate'];
             $msg_arr[$cr]['icon'] = $row['icon'];
+            $msg_arr[$cr]['allDayRate'] = $row['all_day_rate'];
             $cr++;
         }
     } else {

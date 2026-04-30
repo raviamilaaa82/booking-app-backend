@@ -28,20 +28,31 @@ if (isset($postdata) && !empty($postdata)) {
     $colors=$request->color; 
     $booking_price = $request->booking_price;
 
-    $current_date = date_create()->format('Y-m-d H:i:s');
-    //  $current_date = date("Y-m-d");
+    $current_date = date("Y-m-d");
  
     $stmt = null;
     $statement = null;
     $msg_arr = [];
     
 
-    updateBookingData($connection,$id, $title,$sport_id, $client_id,$current_date, $booking_date, $is_recurr_event,$is_all_day,$status,$colors,$time_slots,$is_booked, $booking_price);
-    
+    $response = false;
+
+
+    if (boolval($is_all_day) == true && boolval($is_recurr_event) == false) {
+        $response = updateBookingData($connection,$id, $title,$sport_id, $client_id,$current_date, $booking_date, $is_recurr_event,$is_all_day,$status,$colors,$time_slots,$is_booked, $booking_price);
+    } else {
+        $response = updateBookingData($connection,$id, $title,$sport_id, $client_id,$current_date, $booking_date, $is_recurr_event,$is_all_day,$status,$colors,$time_slots,$is_booked, $booking_price);
+    }
+
+    if ($response == true) {
+        jsonResponse(true, null, "Booking Update Successfull", "Booking Updated Successfull", 200);
+    } else {
+        jsonResponse(false, null, "Booking updation Failed", "Booking Error", 200);
+    }
 }
+
 function updateBookingData($connection, $id, $title,$sport_id, $client_id,$current_date, $booking_date, $is_recurr_event,$is_all_day,$status,$colors,$time_slots,$is_booked, $booking_price)
 {
-
     if (!($stmt = $connection->prepare("UPDATE tbl_booking_master SET event_title=?, sport_id=?, client_id=?, date=?, booking_date=?, is_recurr_event=?, is_all_day=?,status=?,colors=?, booking_price=? WHERE id=?"))) {
         $msg = "Prepare failed: (" . $connection->errno . ") " . $connection->error;
         $msg_arr[0]['identify'] = 'error';
@@ -58,12 +69,14 @@ function updateBookingData($connection, $id, $title,$sport_id, $client_id,$curre
         $msg_arr[1]['msg'] = $msg;
         echo json_encode($msg_arr);
     } else {
-        // $lastId = $stmt->insert_id;
-        if(updateBookingDetails($connection, $id,$time_slots,$is_booked)){
-            jsonResponse(true, null, "Booking Update Successfull", "Booking Updated Successfull", 200);
+        if(boolval($is_all_day) == true) {
+            return true;
+        }
+        else if(updateBookingDetails($connection, $id,$time_slots,$is_booked)){
+            return true;
         }
         else{
-            jsonResponse(false, null, "Booking updation Failed", "Booking Error", 200);
+            return false;
         }
        
     }
@@ -115,10 +128,5 @@ function updateBookingDetails($connection, $id, $time_slots,$is_booked) {
     }
     return true;
 
-
     }
-
-
-
-    
 }

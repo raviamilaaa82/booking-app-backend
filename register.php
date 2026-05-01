@@ -209,7 +209,7 @@ try {
                     <h1 style='font-size:44px;font-weight:700;
                          letter-spacing:3px;color:#ffffff;margin:0 0 10px 0;line-height:1.1;
                          text-transform:uppercase;'>
-                      YOU'RE IN,<br><span style='color:#2ECC71;'>$first_name</span>
+                      YOU'RE IN,<br><span style='color:#2ECC71;font-size:25px'>$first_name</span>
                     </h1>
 
                     <p style='font-size:12px;letter-spacing:2px;

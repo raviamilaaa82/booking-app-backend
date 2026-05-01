@@ -1,14 +1,14 @@
 <?php
+
+use BcMath\Number;
 require_once "header.php";
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
 require_once "response.php";
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
 require_once 'db_connection.php';
 require_once "SessionCheck.php";
+require_once "email_generation_save.php";
 
 
 $user_id = SessionCheck();
@@ -37,17 +37,22 @@ if (isset($postdata) && !empty($postdata)) {
     $statement = null;
     $msg_arr = [];
     $response = false;
+    $new_bookingId = 0;
 
 
-    if (boolval($is_all_day) == true && boolval($is_recurr_event) == false) {
-        $response = insertBookingData($connection, $title, $sport_id, $client_id, $current_date, $booking_date, $is_recurr_event, $is_all_day, $status, $colors, $time_slots, $is_booked, $booking_price);
+    if (boolval($is_recurr_event) == true && boolval($is_all_day) == true) {
+        echo json_encode("all day event recurring !");
     } elseif (boolval($is_recurr_event) == true && boolval($is_all_day) == false) {
         $response = recurringEvents($connection, $title, $sport_id, $client_id, $current_date, $is_recurr_event, $is_all_day, $status, $colors, $time_slots, $is_booked, $booking_price, $recurringtDates);
-    } elseif (boolval($is_recurr_event) == true && boolval($is_all_day) == true) {
-        echo json_encode("all day event recurring !");
     } else {
-        $response = insertBookingData($connection, $title, $sport_id, $client_id, $current_date, $booking_date, $is_recurr_event, $is_all_day, $status, $colors, $time_slots, $is_booked, $booking_price);
+        $new_bookingId = insertBookingData($connection, $title, $sport_id, $client_id, $current_date, $booking_date, $is_recurr_event, $is_all_day, $status, $colors, $time_slots, $is_booked, $booking_price);
+        if ($new_bookingId > 0) {
+            $response = generateEmail($connection, $new_bookingId, $is_all_day, $is_recurr_event);
+        } else {
+            $response = false;
+        }
     }
+
     if ($response == true) {
         jsonResponse(true, null, "Booking Successfull", "Booking Successfull", 200);
     } else {
@@ -56,7 +61,7 @@ if (isset($postdata) && !empty($postdata)) {
 
 
 }
-function insertBookingData($connection, $title, $sport_id, $client_id, $current_date, $booking_date, $is_recurr_event, $is_all_day, $status, $colors, $time_slots, $is_booked, $booking_price)
+function insertBookingData($connection, $title, $sport_id, $client_id, $current_date, $booking_date, $is_recurr_event, $is_all_day, $status, $colors, $time_slots, $is_booked, $booking_price): int
 {
     if (!($stmt = $connection->prepare("INSERT INTO tbl_booking_master (event_title, sport_id, client_id, date, booking_date, is_recurr_event, is_all_day,status,colors, booking_price) VALUES (?,?,?,?,?,?,?,?,?,?)"))) {
         $msg = "Prepare failed: (" . $connection->errno . ") " . $connection->error;
@@ -76,15 +81,17 @@ function insertBookingData($connection, $title, $sport_id, $client_id, $current_
     } else {
         $lastId = $stmt->insert_id;
         if($lastId && boolval($is_all_day) == true) {
-            return true;
+            return $lastId;
         }
         else if(insertBookingDetails($connection, $lastId, $time_slots, $is_booked)) {
-            return true;
-        } else {
-            return false;
+            return $lastId;
+        } 
+        else {
+            return 0;
         }
 
     }
+    
 }
 
 function insertBookingDetails($connection, $lastId, $time_slots, $is_booked)
@@ -121,8 +128,9 @@ function recurringEvents($connection, $title, $sport_id, $client_id, $current_da
 {
     $responseCount = 0;
     for ($i = 0; $i < count($recurringtDates); $i++) {
-        $result = insertBookingData($connection, $title, $sport_id, $client_id, $current_date, $recurringtDates[$i], $is_recurr_event, $is_all_day, $status, $colors, $time_slots, $is_booked, $booking_price);
-        if ($result == true) {
+        $result_id = insertBookingData($connection, $title, $sport_id, $client_id, $current_date, $recurringtDates[$i], $is_recurr_event, $is_all_day, $status, $colors, $time_slots, $is_booked, $booking_price);
+        if ($result_id> 0) {
+            generateEmail($connection, $result_id, $is_all_day, $is_recurr_event);
             $responseCount++;
         }
     }

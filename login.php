@@ -1,15 +1,15 @@
 <?php
+session_start();
+session_regenerate_id(true);
 require_once "header.php";
+require_once 'db_connection.php';
+require_once "response.php";
 
 // HANDLE PRE-FLIGHT REQUEST
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
-
-
-require_once 'db_connection.php';
-require_once "response.php";
 
 
 // Get and decode input
@@ -61,7 +61,7 @@ function loginUser($connection, $email, $password)
         $stmt->close();
         // return ['error' => 'No account found with this email'];
         jsonResponse(false, null, "No account found with this email", "Login Error", 200);
-        
+
     }
 
     $user = $result->fetch_assoc();
@@ -73,12 +73,9 @@ function loginUser($connection, $email, $password)
         jsonResponse(false, null, "Invalid email or password", "Login Error", 200);
     }
 
-  
-    $_SESSION = [];
-    
     $_SESSION['user_id'] = $user['id'];
-    $sessionId = session_id();
-    $user['sessiontoken'] = $sessionId;
+    $_SESSION['user_type'] = $user['user_type'];
+    $_SESSION['LAST_ACTIVITY'] = time();
     jsonResponse(true, $user, "Sucessful login", "Login Successful", 200);
 }
 ?>

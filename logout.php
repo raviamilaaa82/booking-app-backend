@@ -1,8 +1,13 @@
 <?php
 require_once "header.php";
 
-// Clear all session variables
+session_start(); // MUST be here
+
+// Unset all session variables
 $_SESSION = [];
+
+// Destroy the session
+session_destroy();
 
 // Destroy the session cookie (important)
 if (ini_get("session.use_cookies")) {

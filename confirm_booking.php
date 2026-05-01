@@ -1,17 +1,20 @@
 <?php
-// echo json_encode("reached here");
-require_once "header.php";
 
+require_once "header.php";
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
+require_once 'db_connection.php';
 require_once "response.php";
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require_once 'db_connection.php';
 
-// echo json_encode("reached here");
+require_once "SessionCheck.php";
+
+
+$user_id = SessionCheck();
+
 $postdata = file_get_contents("php://input");
 $stmt = null;
 $msg_arr = [];

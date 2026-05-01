@@ -3,10 +3,10 @@ require_once "header.php";
 require_once 'db_connection.php';
 require_once "response.php";
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+require_once "SessionCheck.php";
+
+
+$user_id = SessionCheck();
 
 $date = $_GET['date'] ?? null;
 

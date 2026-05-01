@@ -3,15 +3,11 @@ require_once "header.php";
 require_once 'db_connection.php';
 require_once "response.php";
 
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+require_once "SessionCheck.php";
 
 
-// require_once "SessionCheck.php";
-
+$user_id = SessionCheck();
+$user_type = $_SESSION['user_type'];
 
 $msg_arr = [];
 
@@ -43,7 +39,7 @@ INNER JOIN tbl_registration reg
 INNER JOIN tbl_sports sp
     ON sp.id = b.sport_id
 
-WHERE b.status IN (1,2)
+WHERE b.status IN (1,2) AND ( ? = 'admin' OR b.client_id = ? )
 
 GROUP BY b.id;
 ");
@@ -53,7 +49,12 @@ if (!($stmt)) {
     $msg_arr[0]['identify'] = 'error';
     $msg_arr[1]['msg'] = $msg;
     echo json_encode($msg_arr);
-} else if (!($stmt->execute())) {
+} else if (!($stmt->bind_param("si",$user_type, $user_id))) {
+    $msg = "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error;
+    $msg_arr[0]['identify'] = 'error';
+    $msg_arr[1]['msg'] = $msg;
+    echo json_encode($msg_arr);    
+}else if (!($stmt->execute())) {
     $msg = "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
     $msg_arr[0]['identify'] = 'error';
     $msg_arr[1]['msg'] = $msg;

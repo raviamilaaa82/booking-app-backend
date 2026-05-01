@@ -4,33 +4,10 @@ require_once "header.php";
 require_once 'db_connection.php';
 require_once "response.php";
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+require_once "SessionCheck.php";
 
-// $headers = getallheaders();
 
-// $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
-
-// if (!$authHeader) {
-//   http_response_code(401);
-//   echo json_encode(["message" => "No token provided"]);
-//   exit;
-// }
-// else{
-
-//      $token = str_replace('Bearer ', '', $authHeader);
-//     // $userId = decodeToken($token);
-//      echo($token);
-//      exit;
-// }
-
-// $token = str_replace('Bearer ', '', $authHeader);
-
-// // decode token → get userId
-// $userId = decodeToken($token);
-// // echo($userId);
+$user_id = SessionCheck();
 
 $msg_arr = [];
 

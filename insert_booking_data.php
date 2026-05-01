@@ -8,6 +8,10 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 require_once 'db_connection.php';
+require_once "SessionCheck.php";
+
+
+$user_id = SessionCheck();
 
 $postdata = file_get_contents("php://input");
 

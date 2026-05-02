@@ -33,6 +33,7 @@ GROUP BY b.id
   $stmt->execute();
   $result = $stmt->get_result();
   $data = $result->fetch_assoc();
+  $stmt->close();
 
   $event_title = $data['event_title'];
   $booking_date = $data['booking_date'];

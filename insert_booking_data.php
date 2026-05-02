@@ -1,6 +1,6 @@
 <?php
 
-use BcMath\Number;
+
 require_once "header.php";
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
@@ -89,9 +89,7 @@ function insertBookingData($connection, $title, $sport_id, $client_id, $current_
         else {
             return 0;
         }
-
     }
-    
 }
 
 function insertBookingDetails($connection, $lastId, $time_slots, $is_booked)

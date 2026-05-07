@@ -43,7 +43,7 @@ LEFT JOIN (
     FROM tbl_booking_master
     WHERE booking_date = ?
     AND is_all_day = 1
-    AND status = 1
+    AND status in (1,2)
 ) ad ON 1=1
 
 GROUP BY sm.id, sm.time_slot_name, sm.time_period, ad.all_day_count
